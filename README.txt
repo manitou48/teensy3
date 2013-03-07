@@ -10,6 +10,10 @@ w5100.cpp.fat W5200 mods + SdFat SPI mods
 
 mem2mem.pde   DMA memcpy test
 
+vreftst.pde   check Vcc voltage against internal vref
+
+chiptemp.pde  read temperature from internal sensor on analog channel 38
+
 
 --------
 Some performance comparisons at
