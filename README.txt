@@ -8,6 +8,8 @@ w5100.h       W5200 mods
 
 w5100.cpp.fat W5200 mods + SdFat SPI mods
 
+spiperf.ino   SdFat SPI unconnected tester
+
 mem2mem.pde   DMA memcpy test
 
 vreftst.pde   check Vcc voltage against internal vref
