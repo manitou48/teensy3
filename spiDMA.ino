@@ -14,6 +14,11 @@
 #define RSER_TFFF_DIRS (1<<24)
 #define RSER_TFFF_RE (1<<25)
 
+#define DMA_TCD_CSR_BWC(n)		(((n) & 0x3) << 14)
+#define DMA_CSR_DREQ                    ((uint16_t)0x8)
+#define DMA_CSR_ACTIVE                  ((uint16_t)0x40)
+#define DMA_CR_ERCA ((uint32_t)0x04) // Enable Round Robin Channel Arbitration
+
 
 volatile int DMAdone=0;
 #define DMA_CINT_CINT(n) ((uint8_t)(n & 3)<<0) // Clear Interrupt Request
@@ -33,7 +38,7 @@ void dma_ch1_isr(void)
 
 void spidma_init() {
 		// set size, and SPI address  for xmit and recv dma
-		//  TODO enable DMA in SPI regs ...
+		//  enable DMA in SPI regs ...
 		SPI0_RSER =  RSER_RFDF_DIRS | RSER_RFDF_RE | RSER_TFFF_DIRS | RSER_TFFF_RE;
     	DMA_TCD0_DADDR = &SPI0_PUSHR;
         DMA_TCD0_DOFF = 0;  // no increment
@@ -90,10 +95,11 @@ void spidma_write(char *outbuf, int bytes) {
     DMA_TCD1_NBYTES_MLNO = bytes;
     DMA_TCD0_SOFF = 1;  // increment
     DMA_TCD1_DOFF = 0;  // increment
-    DMA_TCD1_CSR |=  DMA_TCD_CSR_START | (1<<3);  // start and clear SERQ
-    DMA_TCD0_CSR |=  DMA_TCD_CSR_START | (1<<3);   // start transmit
+	DMA_ERQ =3;  // enable channels 0 and 1
 	DMA_SERQ =0;  // enable channel
 	DMA_SERQ =1;  // enable channel
+    DMA_TCD1_CSR |=  DMA_TCD_CSR_START | (1<<3);  // start and clear SERQ
+    DMA_TCD0_CSR |=  DMA_TCD_CSR_START | (1<<3);   // start transmit
 	while (!(DMA_TCD1_CSR & DMA_TCD_CSR_DONE)) /* wait */ ;
 	digitalWrite(CSpin,HIGH);
 }
@@ -118,16 +124,12 @@ void spidma_read(char *inbuf, int bytes) {
 
 void setup() {
 	Serial.begin(9600);
-	while(!Serial.available()){
-		Serial.println("hit a key");
-		delay(1000);
-	}
-	Serial.read();
+	while(!Serial);
 	Serial.println("ok");
 	myspi_init();
 	Serial.println(SPI0_CTAR0,HEX);
 	Serial.println(SPI0_RSER,HEX);
-		delay(2000);
+	delay(2000);
 }
 
 void loop() {
@@ -142,6 +144,11 @@ void loop() {
 	Serial.println(t2);
 	Serial.println(SPI0_CTAR0,HEX);
 	Serial.println(SPI0_RSER,HEX);
+	Serial.println(SPI0_SR,HEX);
+	Serial.println(SPI0_MCR,HEX);
+	Serial.println(DMA_TCD0_CSR,HEX);
+	Serial.println(DMA_TCD1_CSR,HEX);
+	Serial.println(DMA_ES,HEX);
 	delay(2000);
 }
 
