@@ -19,6 +19,8 @@
 #define DMA_CSR_ACTIVE                  ((uint16_t)0x40)
 #define DMA_CR_ERCA ((uint32_t)0x04) // Enable Round Robin Channel Arbitration
 
+#define PRREG(x) Serial.print(#x" 0x"); Serial.println(x,HEX)
+#define BUFSIZ 1000
 
 volatile int DMAdone=0;
 #define DMA_CINT_CINT(n) ((uint8_t)(n & 3)<<0) // Clear Interrupt Request
@@ -40,6 +42,14 @@ void spidma_init() {
 		// set size, and SPI address  for xmit and recv dma
 		//  enable DMA in SPI regs ...
 		SPI0_RSER =  RSER_RFDF_DIRS | RSER_RFDF_RE | RSER_TFFF_DIRS | RSER_TFFF_RE;
+		// DMAMUX setup
+		// Enable clock to the DMAMUX module
+		SIM_SCGC6 |= SIM_SCGC6_DMAMUX;
+		// And clock to the DMA module
+		SIM_SCGC7 |= SIM_SCGC7_DMA;
+		DMAMUX0_CHCFG0 = DMAMUX_ENABLE |  DMAMUX_SOURCE_SPI0_TX;
+		DMAMUX0_CHCFG1 = DMAMUX_ENABLE |  DMAMUX_SOURCE_SPI0_RX;
+
     	DMA_TCD0_DADDR = &SPI0_PUSHR;
         DMA_TCD0_DOFF = 0;  // no increment
     	DMA_TCD1_SADDR = &SPI0_POPR;
@@ -78,10 +88,9 @@ void spidma_transfer(char *inbuf, char *outbuf, int bytes) {
     DMA_TCD1_NBYTES_MLNO = bytes;
     DMA_TCD0_SOFF = 1;  // increment
     DMA_TCD1_DOFF = 1;  // increment
-    DMA_TCD1_CSR |= (1<<6) | (1<<3);  // active and clear SERQ
-    DMA_TCD0_CSR |= (1<<6) | (1<<3);   // start transmit
-	DMA_SERQ =0;  // enable channel
-	DMA_SERQ =1;  // enable channel
+	DMA_ERQ =3;  // enable channels 0 and 1
+    DMA_TCD1_CSR |= DMA_TCD_CSR_START  | (1<<3);  // active and clear SERQ
+    DMA_TCD0_CSR |= DMA_TCD_CSR_START  | (1<<3);   // start transmit
 	while (!(DMA_TCD0_CSR & DMA_TCD_CSR_DONE)) /* wait */ ;
 	digitalWrite(CSpin,HIGH);
 }
@@ -95,13 +104,15 @@ void spidma_write(char *outbuf, int bytes) {
     DMA_TCD1_NBYTES_MLNO = bytes;
     DMA_TCD0_SOFF = 1;  // increment
     DMA_TCD1_DOFF = 0;  // increment
+	// ? enable before start or not
 	DMA_ERQ =3;  // enable channels 0 and 1
-	DMA_SERQ =0;  // enable channel
-	DMA_SERQ =1;  // enable channel
+//	DMA_SERQ =0;  // enable channel
+//	DMA_SERQ =1;  // enable channel
     DMA_TCD1_CSR |=  DMA_TCD_CSR_START | (1<<3);  // start and clear SERQ
     DMA_TCD0_CSR |=  DMA_TCD_CSR_START | (1<<3);   // start transmit
 	while (!(DMA_TCD1_CSR & DMA_TCD_CSR_DONE)) /* wait */ ;
 	digitalWrite(CSpin,HIGH);
+	// ? disable dma/spi
 }
 
 void spidma_read(char *inbuf, int bytes) {
@@ -127,28 +138,29 @@ void setup() {
 	while(!Serial);
 	Serial.println("ok");
 	myspi_init();
-	Serial.println(SPI0_CTAR0,HEX);
-	Serial.println(SPI0_RSER,HEX);
+	PRREG(SPI0_CTAR0);
+	PRREG(SPI0_RSER);
 	delay(2000);
 }
 
 void loop() {
-	char buff[1000];
+	char buff[BUFSIZ],inbuff[BUFSIZ];
 	unsigned int i,t1,t2;
 
 	Serial.println("looping");
-	for(i=0;i<sizeof(buff);i++) buff[i]=i;
+	for(i=0;i<BUFSIZ;i++) buff[i]=i;
 	t1 = micros();
-	spidma_write(buff,sizeof(buff));
+	spidma_write(buff,BUFSIZ);
 	t2 = micros() - t1;
 	Serial.println(t2);
-	Serial.println(SPI0_CTAR0,HEX);
-	Serial.println(SPI0_RSER,HEX);
-	Serial.println(SPI0_SR,HEX);
-	Serial.println(SPI0_MCR,HEX);
-	Serial.println(DMA_TCD0_CSR,HEX);
-	Serial.println(DMA_TCD1_CSR,HEX);
-	Serial.println(DMA_ES,HEX);
+	PRREG(SPI0_CTAR0);
+	PRREG(SPI0_RSER);
+	PRREG(SPI0_SR);
+	PRREG(SPI0_MCR);
+	PRREG(SPI0_TCR);
+	PRREG(DMA_TCD0_CSR);
+	PRREG(DMA_TCD1_CSR);
+	PRREG(DMA_ES);
 	delay(2000);
 }
 
