@@ -18,6 +18,8 @@ vreftst.pde   check Vcc voltage against internal vref
 
 chiptemp.pde  read temperature from internal sensor on analog channel 38
 
+wizfat.ino    hack to test SDfat SPI with W5200
+
 
 --------
 Some performance comparisons at
