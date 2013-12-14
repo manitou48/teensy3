@@ -13,6 +13,7 @@ spiperf.ino   SdFat SPI unconnected tester
 spiDMA.ino   SPI + DMA unconnected tester,  work in progress?
 
 mem2mem.pde   DMA memcpy test
+mem2memisr.pde   DMA memcpy test with ISR
 
 vreftst.pde   check Vcc voltage against internal vref
 
