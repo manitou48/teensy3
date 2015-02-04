@@ -1,0 +1,29 @@
+	teensy LC beta test 1.0.6/1.21-test3  2/4/15
+    speedTest               3.1@96     @48     3.0@96    @48      LC @48mhz
+  nop                       : 0.010 :  0.021 :  0.010 :  0.021 :  0.021 us
+  avr gcc I/O               : 0.105 :  0.187 :  0.148 :  0.159 :  0.311 us
+  Arduino digitalRead       : 0.146 :  0.292 :  0.340 :  0.393 :  0.503 us
+  Arduino digitalWrite      : 0.466 :  0.867 :  0.913 :  1.091 :  1.113 us
+  pinMode                   : 0.238 :  0.469 :  0.740 :  0.793 :  1.151 us
+  multiply volatile byte    : 0.062 :  0.124 :  0.075 :  0.107 :  0.173 us
+  divide volatile byte      : 0.088 :  0.167 :  0.155 :  0.171 :  0.551 us
+  multiply volatile integer : 0.062 :  0.124 :  0.073 :  0.104 :  0.150 us
+  divide volatile integer   : 0.068 :  0.147 :  0.095 :  0.126 :  0.786 us
+  multiply volatile long    : 0.063 :  0.124 :  0.075 :  0.106 :  0.151 us
+  multiply single float     : 0.456 :  0.879 :  1.370 :  1.423 :  2.503 us
+  multiply double float     : 0.686 :  1.362 :  1.625 :  1.806 :  3.871 us
+  divide double float       : 11.923 :  21.222 :  25.335 :  28.871 :  41.096 us
+  itoa()                    : 0.528 :  1.022 :  0.950 :  1.131 :  2.746 us
+  ltoa()                    : 1.898 :  3.797 :  2.485 :  3.996 :  38.396 us
+  dtostrf()                 : 83.298 :  115.347 :  128.535 :  139.896 :  71.071 us
+  random()                  : 0.373 :  0.697 :  0.860 :  0.996 :  9.021 us
+  y |= (1<<x) with volatile : 0.052 :  0.103 :  0.073 :  0.083 :  0.108 us
+  bitSet() with volatile    : 0.052 :  0.104 :  0.075 :  0.085 :  0.108 us
+  analogReference()         : 1.433 :  2.233 :  2.266 :  2.447 :  0.476 us
+  analogRead()              : 8.448 :  9.147 :  9.185 :  9.396 :  12.846 us
+  analogWrite() PWM         : 1.678 :  2.562 :  2.535 :  2.846 :  3.871 us
+  delay(1)                  : 999.998 :  1001.497 :  1000.985 :  1001.496 :  1006.996 us
+  delay(100)                : 99999.998 :  99999.997 :  99999.985 :  99999.996 :  100024.996 us
+  delayMicroseconds(1)      : 1.002 :  1.003 :  1.034 :  1.005 :  1.005 us
+  delayMicroseconds(5)      : 5.010 :  5.014 :  5.043 :  5.018 :  5.019 us
+  delayMicroseconds(100)    : 100.148 :  100.297 :  100.285 :  100.346 :  100.346 us

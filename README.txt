@@ -28,6 +28,8 @@ wizfat.ino    hack to test SDfat SPI with W5200
 
 wizpaul.ino    hack to test Paul;s SPIFIFO from Ethernet lib with W5200
 
+LCperf.txt     beta test results of teensy LC
+
 
 --------
 Some performance comparisons at
