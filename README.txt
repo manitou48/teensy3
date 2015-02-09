@@ -30,6 +30,8 @@ wizpaul.ino    hack to test Paul;s SPIFIFO from Ethernet lib with W5200
 
 LCperf.txt     beta test results of teensy LC
 
+spi1perf.ino   LC SPI1 tester
+
 
 --------
 Some performance comparisons at
