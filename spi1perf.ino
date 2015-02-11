@@ -19,15 +19,15 @@ void spi1_begin() {
 	if (!(sim4 & SIM_SCGC4_SPI1)) SIM_SCGC4 = sim4 | SIM_SCGC4_SPI1;
 	SPI1_C1 = SPI_C1_SPE | SPI_C1_MSTR;   // MODEn 
 	SPI1_C2 = 0;
-	SPI1_BR =  SPI_BR_SPPR(0) | SPI_BR_SPR(0); // SPI CLK speed
+	SPI1_BR =  SPI_BR_SPPR(2) | SPI_BR_SPR(0); // SPI CLK speed
 	uint8_t tmp __attribute__((unused)) = SPI1_S;
 	// enable pins
 	CORE_PIN0_CONFIG = PORT_PCR_MUX(2);  // MOSI
 	CORE_PIN1_CONFIG = PORT_PCR_MUX(2);  // MISO
 	CORE_PIN20_CONFIG = PORT_PCR_MUX(2); // CLK
 	// DMA
-	SIM_SCGC7 |= SIM_SCGC7_DMA;
-	SIM_SCGC6 |= SIM_SCGC6_DMAMUX;
+	SIM_SCGC7 |= SIM_SCGC7_DMA;   //Enable clock to the DMA module
+	SIM_SCGC6 |= SIM_SCGC6_DMAMUX;  // clock to the DMAMUX module
 	DMAMUX0_CHCFG0 =  0;
 	DMAMUX0_CHCFG0 =  DMAMUX_ENABLE | DMAMUX_SOURCE_SPI1_TX;
 }
@@ -87,20 +87,20 @@ inline static uint16_t transfer16(uint16_t data) {
 		return r;
 }
 
-  // DMA  TODO   need 2nd DMA channel for input??
+  // DMA  
   // see paul's DMAChannel.h
 void spiwriteDMA(uint8_t *data, int len) {
 	SPI1_C1 = 0; // SPI reset
 	SPI1_C2 |= SPI_C2_TXDMAE;  // xmit DMA
 	SPI1_C1 = SPI_C1_SPE | SPI_C1_MSTR;   // enable 
+	DMA_DSR_BCR0 = DMA_DSR_BCR_DONE ;  // reset
 	DMA_SAR0 = data;
 	DMA_DAR0 = &SPI1_DL;
-	DMA_DSR_BCR0 = DMA_DSR_BCR_DONE ;  // reset
 	DMA_DSR_BCR0 =  len;
 //	DMA_DCR0 = /*DMA_DCR_CS |*/ DMA_DCR_ERQ | DMA_DCR_D_REQ | DMA_DCR_SINC | DMA_DCR_SSIZE(1) | DMA_DCR_DSIZE(1) ; //| DMA_DCR_START;
-	DMA_DCR0 =  DMA_DCR_D_REQ | DMA_DCR_SINC | DMA_DCR_SSIZE(1) | DMA_DCR_DSIZE(1) ; 
+	DMA_DCR0 =  DMA_DCR_CS | DMA_DCR_D_REQ | DMA_DCR_SINC | DMA_DCR_SSIZE(1) | DMA_DCR_DSIZE(1) ; 
 	 DMA_DCR0 |= DMA_DCR_ERQ;   // enable
-	 DMA_DCR0 |= DMA_DCR_START;
+	// DMA_DCR0 |= DMA_DCR_START;
 #if 0
 	PRREG(SPI1_C1);
 	PRREG(SPI1_C2);
@@ -108,8 +108,8 @@ void spiwriteDMA(uint8_t *data, int len) {
 	PRREG(DMA_DSR_BCR0);
 	PRREG(DMA_DCR0);
 #endif
-	while (!(DMA_DSR_BCR0 & DMA_DSR_BCR_DONE)) /* wait */ ;
-//	while(DMA_DCR0 & DMA_DCR_ERQ); // wait for BCR to zero
+	//while (!(DMA_DSR_BCR0 & DMA_DSR_BCR_DONE)) /* wait */ ;
+	while(DMA_DCR0 & DMA_DCR_ERQ); // wait for BCR to zero
 }
 
 void setup() {
@@ -130,11 +130,11 @@ void loop() {
 
 	digitalWrite(CS,LOW);
 	t1 = micros();
-	spi1_transfer(bytes,BYTES);
+//	spi1_transfer(bytes,BYTES);
 //	writeBytes(bytes,BYTES);
 //	writeFIFO(bytes,BYTES);
 //	write16s(shorts,SHORTS);
-//	spiwriteDMA(bytes,BYTES);   // TODO
+	spiwriteDMA(bytes,BYTES);  
 	t1 = micros() - t1;
 	digitalWrite(CS,HIGH);
 	mbs = 8*BYTES/(float)t1;
