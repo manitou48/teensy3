@@ -12,7 +12,7 @@ int src[WORDS],dst[WORDS];
 //int32_t DMAMEM _dma_Buffer_B[WORDS];
 
 void prmbs(char *lbl,unsigned long us,int bits) {
-    float mbs = float(bits)/us;
+    float mbs = (float)bits/us;
     Serial.print(mbs,2); Serial.print(" mbs  ");
     Serial.print(us); Serial.print(" us   ");
     Serial.println(lbl);
