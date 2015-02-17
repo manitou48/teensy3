@@ -59,6 +59,8 @@ void doDMA() {
 	dma.destination((volatile uint8_t&)SPI0_DL);
 	dma.disableOnCompletion();
 	dma.triggerAtHardwareEvent(DMAMUX_SOURCE_SPI0_TX);
+	SPI0_C1 = 0; // SPI reset
+    SPI0_C1 = SPI_C1_SPE | SPI_C1_MSTR ;   // enable master  MODEn
 	SPI0_C2 = SPI_C2_TXDMAE;  // ready
 #if 0
     PRREG(SPI0_BR);
