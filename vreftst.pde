@@ -1,5 +1,8 @@
+// compare VREF ADC channel 39 to Vcc
+//  datasheet says  1.195  min/max 1.1915/1.1977 v
+
 void setup() {
-  analogReference(EXTERNAL);
+  analogReference(DEFAULT);
   analogReadResolution(12);
   analogReadAveraging(32);
 }
