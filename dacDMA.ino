@@ -24,14 +24,6 @@ void prregs() {
     PRREG(DAC0_DAT0H);
 }
 
-volatile int DMAdone;
-
-void dma_isr() {
-	DMAdone =1;
-	dma.clearInterrupt();
-}
-
-
 void timer_init() {
 	// ftm1 channel 0
 	SIM_SCGC6 |= SIM_SCGC6_TPM1;
