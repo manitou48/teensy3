@@ -13,7 +13,6 @@ int pintest = ANALOG_INA;
 // teensy LC
 //  teensylc 27 14-26
 #define PINS 27
-pins
 uint8_t adc_pins[] = {A0,A1,A2,A3,A4,A5,A6,A7,A8, A9,A10,A11,
     /* DAC */ A12};
 
