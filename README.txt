@@ -1,4 +1,4 @@
-Teensy 3.0 sketches and such    https://github.com/manitou48/teensy3
+Teensy 3.* sketches and such    https://github.com/manitou48/teensy3
 
 Ethernet.h    W5200 mods
 
@@ -31,6 +31,8 @@ wizpaul.ino    hack to test Paul;s SPIFIFO from Ethernet lib with W5200
 LCperf.txt     beta test results of teensy LC
 
 spi1perf.ino   LC SPI1 tester
+
+etherraw.ino   K66 beta test of proto ethernet shield
 
 
 --------
