@@ -7,7 +7,7 @@
 #define ETH_PAD_SIZE                  2
 
 // default was 250 ms
-#define TCP_TMR_INTERVAL       50 
+#define TCP_TMR_INTERVAL       250 
 
  
 #define LWIP_ARP 1
