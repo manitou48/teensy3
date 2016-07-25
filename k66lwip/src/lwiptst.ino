@@ -244,6 +244,7 @@ void tcptx(int pkts) {
 			err=tcp_write(pcb,buff,sizeof(buff),TCP_WRITE_FLAG_COPY);
 			ether_poll();   // keep checkin while we blast
 		} while( err < 0);   // -1 is ERR_MEM
+		tcp_output(pcb);
 	}
 	while(tcp_sndbuf(pcb) != sendqlth) ether_poll(); // wait til sent
 	tcp_close(pcb);
