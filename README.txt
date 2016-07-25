@@ -34,6 +34,7 @@ spi1perf.ino   LC SPI1 tester
 
 etherraw.ino   K66 beta test of proto ethernet shield
 
+k66lwip/       K66 beta with proto ethernet shield and lwIP
 
 --------
 Some performance comparisons at

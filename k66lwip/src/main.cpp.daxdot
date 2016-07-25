@@ -1,0 +1,42 @@
+#include "WProgram.h"
+
+
+/* daxdotf  float   */
+#include <stdio.h>
+#define M 400
+#define REPS 1000
+float x[M], y[M], z[M], sum;
+unsigned long ip,sax;
+void dummy(float *a,float b){}
+
+extern "C" int main(void)
+{
+	Serial.begin(9600);
+
+	while(1) {
+	char str[128];
+        int i,r;
+
+    Serial.println("hello");
+	for(i=0;i<M;i++) x[i] = y[i] = i;
+	sum =0.;
+
+	ip = millis();
+	for(r=0;r<REPS;r++)
+	  for(i=0;i<M;i++) sum += x[i] * y[i];
+	ip = millis() - ip;
+	sax = millis();
+	for(r=0;r<REPS;r++)
+	  for(i=0;i<M;i++) y[i] = 3.7f*x[i] + y[i];
+	sax = millis() - sax;
+	dummy(y,sum);
+	sprintf(str," reps %d  vec lth %d\n",REPS,M); Serial.println(str);
+        sprintf(str," ip %ld  sax %ld",ip,sax); Serial.println(str);
+//	sprintf(str,"ddot %g %6.2fs %6.2f Mflops\n",sum,ip, (2 * REPS * N)/(ip * 1000000.));
+//	Serial.println(str);
+//	sprintf(str,"daxpy %g %6.2fs %6.2f Mflops\n",sum,sax, (2 * REPS * N)/(sax * 1000000.));
+//	Serial.println(str);
+        delay(3000);
+	}
+}
+
