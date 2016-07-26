@@ -36,6 +36,8 @@ etherraw.ino   K66 beta test of proto ethernet shield
 
 k66lwip/       K66 beta with proto ethernet shield and lwIP
 
+cryptolib.ino  K66 CAU example
+
 --------
 Some performance comparisons at
 
