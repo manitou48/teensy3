@@ -4,6 +4,7 @@
 #include "lwip/netif.h"
 #include "lwip/timers.h"
 #include "lwip/inet.h"
+#include "lwip/stats.h"
 #include "netif/etharp.h"
 #include "kinetis.h"
 #include "core_pins.h"

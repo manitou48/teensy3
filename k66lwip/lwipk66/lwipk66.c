@@ -118,8 +118,9 @@ err_t k66_low_level_output(struct netif *netif, struct pbuf *p)
 	uint8_t  *dst;
 
 	outpkts++;
+	LINK_STATS_INC(link.xmit);
     buf = tx_ring + txnum;
- 	while(1) {   // keep trying   80us max?
+ 	while(1) {   // keep trying   @100mbs 120us max?
     	flags = buf->flags;
     	if ((flags & 0x8000) == 0) {
         	buf->length = p->tot_len;
@@ -148,7 +149,13 @@ void handle_frame(void *packet, unsigned int len, uint16_t flags)
 	struct pbuf *p;
 
 	inpkts++;
+	LINK_STATS_INC(link.recv);
 	p = pbuf_alloc(PBUF_RAW,len,PBUF_RAM);
+	if (p==NULL) {
+		LINK_STATS_INC(link.memerr);
+		LINK_STATS_INC(link.drop);
+		return;
+	}
 	MEMCPY(p->payload,packet,len);   // assume not chain ?
 	if(ethernet_input(p,&netif) != ERR_OK) {
 		pbuf_free(p);

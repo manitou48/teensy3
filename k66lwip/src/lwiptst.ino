@@ -45,7 +45,10 @@ void print_stats() {
 #if LWIP_STATS
 	char str[128];
 
-	// ? LINK stats are 0
+	// my  LINK stats
+	sprintf(str,"LINK in %d out %d drop %d memerr %d",
+	 lwip_stats.link.recv,lwip_stats.link.xmit,lwip_stats.link.drop,lwip_stats.link.memerr);
+	Serial.println(str);
 	sprintf(str,"TCP in %d out %d drop %d memerr %d",
 	 lwip_stats.tcp.recv,lwip_stats.tcp.xmit,lwip_stats.tcp.drop,lwip_stats.tcp.memerr);
 	Serial.println(str);
