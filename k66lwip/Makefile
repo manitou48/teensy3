@@ -1,8 +1,9 @@
+#  makefile for teensy K66 and K64 ethernet
 # The name of your project (used to name the compiled .hex file)
 TARGET = $(notdir $(CURDIR))
 
-# The teensy version to use, 30, 31, or LC
-TEENSY = 35
+# The teensy version to use   K66 or K64
+TEENSY = K66
 
 # Set to 24000000, 48000000, or 96000000 to set CPU core speed
 TEENSY_CORE_SPEED = 120000000
@@ -64,24 +65,16 @@ LDFLAGS = -Os -Wl,--gc-sections,--defsym=__rtc_localtime=0 -mthumb
 LIBS = -lm
 
 # compiler options specific to teensy version
-ifeq ($(TEENSY), 30)
-    CPPFLAGS += -D__MK20DX128__ -mcpu=cortex-m4
-    LDSCRIPT = $(COREPATH)/mk20dx128.ld
-    LDFLAGS += -mcpu=cortex-m4 -T$(LDSCRIPT)
-else
-    ifeq ($(TEENSY), 31)
-        CPPFLAGS += -D__MK20DX256__ -mcpu=cortex-m4
-        LDSCRIPT = $(COREPATH)/mk20dx256.ld
-        LDFLAGS += -mcpu=cortex-m4 -T$(LDSCRIPT)
-    else
-        ifeq ($(TEENSY), 35)
-            CPPFLAGS += -D__MK66FX1M0__ -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant
-            LDSCRIPT = $(COREPATH)/mk66fx1m0.ld
-            LDFLAGS += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -T$(LDSCRIPT)
-        else
-            $(error Invalid setting for TEENSY)
-        endif
-    endif
+ifeq ($(TEENSY), K66)
+     CPPFLAGS += -D__MK66FX1M0__ -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant
+     LDSCRIPT = $(COREPATH)/mk66fx1m0.ld
+     LDFLAGS += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -T$(LDSCRIPT)
+endif
+
+ifeq ($(TEENSY), K64)
+     CPPFLAGS += -D__MK64FX512__ -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant
+     LDSCRIPT = $(COREPATH)/mk64fx512.ld
+     LDFLAGS += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -T$(LDSCRIPT)
 endif
 
 # set arduino define if given
