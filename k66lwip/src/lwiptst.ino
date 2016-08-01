@@ -1,6 +1,7 @@
 // K66 lwiptst   
 // discussion on https://forum.pjrc.com/threads/34808-K66-Beta-Test?p=109161&viewfull=1#post109161
 
+#include "IPAddress.h"   // teensy
 #include "lwipk66.h"
 
 // api includes
@@ -14,6 +15,7 @@
 // debug stats stuff
 extern "C" { 
 	uint32_t inpkts,outpkts;
+	uint32_t tom1,tom2,tom3;  // debug
 //	char thdstr[64];
 #if LWIP_STATS
 	struct stats_ lwip_stats;
@@ -316,7 +318,21 @@ void setup() {
 	Serial.println("lwiptst");
 
 	// init Ether and lwip
+#if 1
 	ether_init("192.168.1.23","255.255.255.0","192.168.1.1");
+#else
+	if (ether_init_dhcp() < 0) {
+		Serial.println("DHCP failed");
+	   Serial.println(tom1);
+	   char str[128];
+	   sprintf(str,"in %lu  out %lu ",inpkts,outpkts);
+	   Serial.println(str);
+	   print_stats();
+		while(1);
+    }
+#endif
+	IPAddress myip(ether_get_ipaddr());
+	Serial.print("my IP "); Serial.println(myip);
 	prregs();
 //	udp_sink();
 //	udp_echo(10,8);

@@ -6,6 +6,7 @@
 #include "lwipk66.h"
 
 uint32_t inpkts,outpkts;
+uint32_t tom1,tom2,tom3; // debug
 
 static struct netif netif;
 
@@ -15,7 +16,11 @@ static char gateway[17] = "\0";
 static char networkmask[17] = "\0";
 
 //  eventually fetch mac address from teensy ROM
+#if  1    //static IP
 static char mac[6] __attribute__ ((aligned(4))) = {0x04,0xe9,0xe5,0xba,0xbe,0x01};
+#else    // dhcp
+static char mac[6] __attribute__ ((aligned(4))) = {0x04,0xe9,0xe5,0xba,0xbe,0xdc};
+#endif
 
 //#define MACADDR1 0x04E9E5
 //#define MACADDR2 0xBABE01
@@ -183,7 +188,6 @@ err_t k66_enetif_init(struct netif *netif)
 
   netif->output = etharp_output;
   netif->linkoutput = k66_low_level_output;
-  netif_set_up(netif);
 
 	return ERR_OK;
 }
@@ -203,7 +207,28 @@ void ether_init(const char *ipaddr, const char *netmask, const char *gw) {
     netif_add(&netif, &ip_n, &mask_n, &gateway_n, NULL, k66_enetif_init, ethernet_input);
     netif_set_default(&netif);
 	// ? netif call backs?
-  
+  	netif_set_up(&netif);
+}
+
+int ether_init_dhcp() {
+#if LWIP_DHCP
+	uint32_t ms;
+	snprintf(mac_addr, 19, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+	memset((void*) &netif, 0, sizeof(netif));
+	netif_add(&netif, NULL,NULL,NULL, NULL,k66_enetif_init, ethernet_input);
+	netif_set_default(&netif);
+	dhcp_start(&netif);   // try DHCP
+	ms = sys_now();
+	while (netif.dhcp->state != DHCP_BOUND) {
+		ether_poll();
+		tom1 = netif.dhcp->state;
+		if (sys_now()-ms > 10000) return -1; // timed out
+	}
+	return 0;
+#else
+	return -1;   // no dhcp
+#endif
 }
 
 void ether_poll() {
@@ -226,3 +251,12 @@ void ether_poll() {
   sys_check_timeouts();   // lwip timers
 }
 
+void ether_delay(uint32_t ms) {
+	// wait and poll
+	uint32_t t = sys_now();
+	while(sys_now() -t < ms) ether_poll();
+}
+
+uint32_t ether_get_ipaddr() {
+	return  netif.ip_addr.addr;
+}

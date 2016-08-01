@@ -12,6 +12,8 @@
  
 #define LWIP_ARP 1
 #define MEMP_NUM_ARP_QUEUE          10
+#define MEMP_NUM_SYS_TIMEOUT        10
+#define DHCP_DOES_ARP_CHECK 0
 
 //  LIBC 1 use C malloc
 #define MEM_LIBC_MALLOC             1
@@ -45,7 +47,7 @@
 #define DEFAULT_THREAD_STACKSIZE    512
 
 #define MEMP_NUM_SYS_TIMEOUT        16
-#endif
+#endif    // NO_SYS 0
 
 // 32-bit alignment
 #define MEM_ALIGNMENT               4
@@ -60,7 +62,7 @@
 #define TCP_QUEUE_OOSEQ             0
 #define TCP_OVERSIZE                0
 
-#define LWIP_DHCP                   0
+#define LWIP_DHCP                   1
 #define LWIP_DNS                    0
 
 // Support Multicast
