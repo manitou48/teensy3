@@ -1,0 +1,233 @@
+// K66 K64 lwip echo server
+//  problems with TCP connect hangs ?  if no tcp connects, udp server will run
+// discussion on https://forum.pjrc.com/threads/34808-K66-Beta-Test?p=109161&viewfull=1#post109161
+
+#include "IPAddress.h"   // teensy
+#include "lwipk66.h"
+
+// api includes
+#include "lwip/udp.h"
+#include "lwip/tcp.h"
+#include "lwip/stats.h"
+
+#define swap2 __builtin_bswap16
+#define swap4 __builtin_bswap32
+
+// debug stats stuff
+extern "C" { 
+	uint32_t inpkts,outpkts;
+	uint32_t tom1,tom2,tom3;  // debug
+//	char thdstr[64];
+#if LWIP_STATS
+	struct stats_ lwip_stats;
+#endif
+}
+
+#define PRREG(x) Serial.print(#x" 0x"); Serial.println(x,HEX)
+
+void prregs() {
+    PRREG(MPU_RGDAAC0);
+    PRREG(SIM_SCGC2);
+    PRREG(SIM_SOPT2);
+    PRREG(ENET_PALR);
+    PRREG(ENET_PAUR);
+    PRREG(ENET_EIR);
+    PRREG(ENET_EIMR);
+    PRREG(ENET_ECR);
+    PRREG(ENET_MSCR);
+    PRREG(ENET_MRBR);
+    PRREG(ENET_RCR);
+    PRREG(ENET_TCR);
+    PRREG(ENET_TACC);
+    PRREG(ENET_RACC);
+    PRREG(ENET_MMFR);
+}
+
+void print_stats() {
+	 // lwip stats_display() needed printf
+#if LWIP_STATS
+	char str[128];
+
+	// my  LINK stats
+	sprintf(str,"LINK in %d out %d drop %d memerr %d",
+	 lwip_stats.link.recv,lwip_stats.link.xmit,lwip_stats.link.drop,lwip_stats.link.memerr);
+	Serial.println(str);
+	sprintf(str,"TCP in %d out %d drop %d memerr %d",
+	 lwip_stats.tcp.recv,lwip_stats.tcp.xmit,lwip_stats.tcp.drop,lwip_stats.tcp.memerr);
+	Serial.println(str);
+	sprintf(str,"UDP in %d out %d drop %d memerr %d",
+	 lwip_stats.udp.recv,lwip_stats.udp.xmit,lwip_stats.udp.drop,lwip_stats.udp.memerr);
+	Serial.println(str);
+	sprintf(str,"ICMP in %d out %d",
+	 lwip_stats.icmp.recv,lwip_stats.icmp.xmit);
+	Serial.println(str);
+#if MEM_STATS
+	sprintf(str,"HEAP avail %d used %d max %d err %d",
+	 lwip_stats.mem.avail,lwip_stats.mem.used,lwip_stats.mem.max,lwip_stats.mem.err);
+	Serial.println(str);
+#endif
+#endif
+}
+
+
+// UDP callbacks
+//  fancy would be pbuf recv_q per UDP pcb, if q full, drop and free pbuf
+
+
+// udp echo recv callback
+void udp_callback(void * arg, struct udp_pcb * upcb, struct pbuf * p, struct ip_addr * addr, u16_t port) 
+{
+	if (p == NULL) return;
+	udp_sendto(upcb,p,addr,port);
+	pbuf_free(p);
+}
+
+
+void udp_echosrv() {
+    struct udp_pcb *pcb;
+
+	Serial.println("udp echosrv on port 7");
+    pcb = udp_new();
+    udp_bind(pcb, IP_ADDR_ANY, 7);    // local port
+    udp_recv(pcb,udp_callback,NULL);    // do once?
+    // fall into loop / ether_poll
+}
+
+
+//   ----- TCP ------
+
+void tcperr_callback(void * arg, err_t err)
+{
+	// set with tcp_err()
+	Serial.print("TCP err "); Serial.println(err);
+	*(int *)arg = err;
+}
+
+
+static struct tcp_pcb * pcba;   // accepted pcb
+volatile bool tcprx_running=true;
+
+void listen_err_callback(void * arg, err_t err)
+{
+	// set with tcp_err()
+	Serial.print("TCP listen err "); Serial.println(err);
+	*(int *)arg = err;
+}
+
+err_t accept_callback(void * arg, struct tcp_pcb * newpcb, err_t err) {
+	if (err || !newpcb) {
+		Serial.print("accept err ");Serial.println(err);
+		delay(100);
+		return 1;
+	}
+	Serial.println("accepted");
+	tcp_accepted(newpcb);
+	pcba = newpcb;    // let tcprx proceed
+	return 0;
+}
+
+err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t err)
+{
+	static uint32_t t0=0, t,bytes=0;
+
+	if (p == NULL) {
+		// other end closed
+		t=t-t0;
+		Serial.println("remote closed");
+		Serial.print(bytes); Serial.println(" bytes");
+
+		tcp_close(tpcb);
+		tcprx_running=false;
+		return 0;
+	}
+	tcp_recved(tpcb,p->tot_len);   // data processed
+	bytes += p->tot_len;
+	do {   // echo it back
+		err=tcp_write(tpcb,p->payload,p->tot_len,TCP_WRITE_FLAG_COPY);
+		ether_poll();   // keep checkin while we send
+	} while( err < 0);   // -1 is ERR_MEM
+	tcp_output(tpcb);
+	pbuf_free(p);
+	return 0;
+}
+
+void tcp_echosrv() {
+	struct tcp_pcb * pcb;
+	struct tcp_pcb * pcbl;   // listen
+	
+	pcb = tcp_new();
+	tcp_bind(pcb,IP_ADDR_ANY, 7);  // server port
+	pcbl = tcp_listen(pcb);   // pcb deallocated
+	tcp_err(pcbl, listen_err_callback);
+  while(1) {
+	Serial.println("server listening on 7");
+	pcba = NULL;    // accept PCB
+	tcp_accept(pcbl, accept_callback);
+
+	uint32_t ms = millis();
+	while (pcba == NULL)  {
+	    if (millis()-ms > 60000) {
+		 Serial.println("accept timedout"); 
+	    	tcp_close(pcbl);
+		 return;
+		}
+	ether_poll();   // waiting connection
+   }
+	tcp_err(pcba,tcperr_callback);
+	tcp_recv(pcba, recv_callback);  // all the action is now in callback
+
+	while(tcprx_running){
+	 ether_poll();  // wait til close
+   }
+	tcprx_running=true;
+	}
+	Serial.println("fall through");
+	tcp_close(pcbl);
+	// fall through to main ether_poll loop ....
+}
+
+void setup() {
+	Serial.begin(9600);
+	while(!Serial);
+	delay(3000);
+    Serial.println();Serial.print(F_CPU); Serial.print(" ");
+    Serial.print(F_BUS); Serial.print(" ");
+    Serial.print(F_MEM); Serial.print(" ");
+    Serial.print(__TIME__);Serial.print(" ");Serial.println(__DATE__);
+
+	Serial.println("lwip echosrv tcp udp port 7");
+
+	// init Ether and lwip
+#if 1
+	ether_init("192.168.1.23","255.255.255.0","192.168.1.1");
+#else
+	if (ether_init_dhcp() < 0) {
+		Serial.println("DHCP failed");
+	   Serial.println(tom1);
+	   char str[128];
+	   sprintf(str,"in %lu  out %lu ",inpkts,outpkts);
+	   Serial.println(str);
+	   print_stats();
+		while(1);
+    }
+#endif
+	IPAddress myip(ether_get_ipaddr());
+	Serial.print("my IP "); Serial.println(myip);
+	prregs();
+	udp_echosrv();
+
+	tcp_echosrv();
+}
+
+void loop() {
+	static uint32_t ms = millis();
+	ether_poll();    // check for new pkts, check timers
+	if (millis() -ms > 5000) {   // active "delay"
+	   char str[128];
+	   sprintf(str,"%lu ms  in %lu  out %lu ",ms,inpkts,outpkts);
+	   Serial.println(str);
+	   print_stats();
+//	   Serial.println(thdstr);
+	   ms = millis();
+	}
+}
