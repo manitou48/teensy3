@@ -1,0 +1,172 @@
+// K66 K64 lwip web server
+//  ? works a few times then hangs ?  
+//  could get web pages from microSD
+// discussion on https://forum.pjrc.com/threads/34808-K66-Beta-Test?p=109161&viewfull=1#post109161
+
+#include "IPAddress.h"   // teensy
+#include "lwipk66.h"
+
+// api includes
+
+#include "lwip/tcp.h"
+
+
+#define swap2 __builtin_bswap16
+#define swap4 __builtin_bswap32
+
+// debug stats stuff
+extern "C" { 
+	uint32_t inpkts,outpkts;
+	uint32_t tom1,tom2,tom3;  // debug
+//	char thdstr[64];
+#if LWIP_STATS
+	struct stats_ lwip_stats;
+#endif
+}
+
+#define LEDpin 13
+
+void tcperr_callback(void * arg, err_t err)
+{
+	// set with tcp_err()
+	Serial.print("TCP err "); Serial.println(err);
+	*(int *)arg = err;
+}
+
+
+static	struct tcp_pcb * pcbl;   // listen pcb
+static struct tcp_pcb * pcba;   // accepted pcb
+
+
+// web page
+char *msg1 = "HTTP/1.0 200 OK\nContent-type:text/html\n\n"
+		"<H1>K64/K66 web server</H1>\n";
+char *msg2 = "<br>Click <a href=\"/LEDON\">here</a> turn the LED on"
+             "<br>Click <a href=\"/LEDOFF\">here</a> turn the LED off\n";
+
+void web_close(struct tcp_pcb * tpcb){
+	Serial.println("web close");
+	tcp_recv(tpcb,NULL);
+	tcp_err(tpcb,NULL);
+	tcp_close(tpcb);
+}
+
+void listen_err_callback(void * arg, err_t err)
+{
+	// set with tcp_err()
+	Serial.print("TCP listen err "); Serial.println(err);
+	*(int *)arg = err;
+}
+
+
+
+void tcp_sendstr(struct tcp_pcb * tpcb, char *str) {
+	err_t err;
+
+	do {   
+		err=tcp_write(tpcb,str,strlen(str),TCP_WRITE_FLAG_COPY);
+		ether_poll();   // keep checkin while we send
+	} while( err < 0);   // -1 is ERR_MEM
+	tcp_output(tpcb);
+}
+
+err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t err)
+{
+	char str[128];
+	int i;
+	static int pkts=0;
+
+	if (p == NULL) {
+		// other end closed
+		Serial.println("remote closed");
+
+		web_close(tpcb);
+		return 0;
+	}
+	
+	pkts++;
+	String line = "";
+	Serial.print(pkts); Serial.print(" pkts  "); Serial.println(p->tot_len);
+	Serial.println();
+	for(i=0;i<p->tot_len;i++) line += ((char *)p->payload)[i];
+	Serial.println(line);
+	// parse query
+	if (line.indexOf("GET /LEDON") != -1) digitalWrite(LEDpin,HIGH);
+	if (line.indexOf("GET /LEDOFF") != -1) digitalWrite(LEDpin,LOW);
+
+	tcp_recved(tpcb,p->tot_len);   // data processed
+	pbuf_free(p);
+
+	tcp_sendstr(tpcb,msg1);
+	tcp_sendstr(tpcb,msg2);
+	sprintf(str,"<hr>\n uptime %lu ms\n\n", millis());
+	tcp_sendstr(tpcb,str);
+	// wait til send and close,  
+	ether_delay(1000);
+	web_close(tpcb);
+	return 0;
+}
+
+err_t accept_callback(void * arg, struct tcp_pcb * newpcb, err_t err) {
+	if (err || !newpcb) {
+		Serial.print("accept err ");Serial.println(err);
+		delay(10);
+		return 1;
+	}
+	Serial.println("accepted");
+	tcp_recv(newpcb, recv_callback);
+	tcp_err(newpcb, tcperr_callback);
+	tcp_accepted(pcbl);   // ref says the listen pcb
+	pcba = newpcb;    // let tcprx proceed
+	return 0;
+}
+
+void websrv() {
+	struct tcp_pcb * pcb;
+	
+	pcb = tcp_new();
+	tcp_bind(pcb,IP_ADDR_ANY, 80);  // server port
+	pcbl = tcp_listen(pcb);   // pcb deallocated
+	tcp_err(pcbl, listen_err_callback);
+
+	Serial.println("web server listening on 80");
+
+	tcp_accept(pcbl, accept_callback);
+
+	// fall through to main ether_poll loop ....
+}
+
+void setup() {
+	Serial.begin(9600);
+	while(!Serial);
+	delay(3000);
+	pinMode(LEDpin,OUTPUT);
+    Serial.println();Serial.print(F_CPU); Serial.print(" ");
+    Serial.print(F_BUS); Serial.print(" ");
+    Serial.print(F_MEM); Serial.print(" ");
+    Serial.print(__TIME__);Serial.print(" ");Serial.println(__DATE__);
+
+	Serial.println("lwip websrv");
+
+	// init Ether and lwip
+#if 1
+	ether_init("192.168.1.23","255.255.255.0","192.168.1.1");
+#else
+	if (ether_init_dhcp() < 0) {
+		Serial.println("DHCP failed");
+	   Serial.println(tom1);
+	   char str[128];
+	   sprintf(str,"in %lu  out %lu ",inpkts,outpkts);
+	   Serial.println(str);
+		while(1);
+    }
+#endif
+	IPAddress myip(ether_get_ipaddr());
+	Serial.print("my IP "); Serial.println(myip);
+
+	websrv();
+}
+
+void loop() {
+	ether_poll();    // check for new pkts, check timers
+}

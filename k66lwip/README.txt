@@ -11,6 +11,7 @@ teensy makefile template    https://github.com/apmorton/teensy-template
 
 setup: mkdir src build libraries    link teensy3/ tools/
   lwiptst.ino   or  main.cpp into src
+     src/ should have only one .ino file that Makefile will use
  ln -s /u1/home/linux/arduino-1.6.9/hardware/teensy/avr/cores/teensy3
  ln -s /u1/home/linux/arduino-1.6.9/hardware/tools
  mv /u1/home/linux/arduino-1.6.9/hardware/teensy/avr/cores/teensy3/main.cpp /u1/home/linux/arduino-1.6.9/hardware/teensy/avr/cores/teensy3/main.cpp.0

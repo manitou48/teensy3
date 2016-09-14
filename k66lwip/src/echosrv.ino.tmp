@@ -104,6 +104,7 @@ void tcperr_callback(void * arg, err_t err)
 }
 
 
+static	struct tcp_pcb * pcbl;   // listen pcb
 static struct tcp_pcb * pcba;   // accepted pcb
 volatile bool tcprx_running=true;
 
@@ -121,7 +122,7 @@ err_t accept_callback(void * arg, struct tcp_pcb * newpcb, err_t err) {
 		return 1;
 	}
 	Serial.println("accepted");
-	tcp_accepted(newpcb);
+	tcp_accepted(pcbl);   // ref says the listen pcb
 	pcba = newpcb;    // let tcprx proceed
 	return 0;
 }
@@ -153,7 +154,6 @@ err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t er
 
 void tcp_echosrv() {
 	struct tcp_pcb * pcb;
-	struct tcp_pcb * pcbl;   // listen
 	
 	pcb = tcp_new();
 	tcp_bind(pcb,IP_ADDR_ANY, 7);  // server port
@@ -164,15 +164,9 @@ void tcp_echosrv() {
 	pcba = NULL;    // accept PCB
 	tcp_accept(pcbl, accept_callback);
 
-	uint32_t ms = millis();
 	while (pcba == NULL)  {
-	    if (millis()-ms > 60000) {
-		 Serial.println("accept timedout"); 
-	    	tcp_close(pcbl);
-		 return;
-		}
-	ether_poll();   // waiting connection
-   }
+		ether_poll();   // waiting connection
+    }
 	tcp_err(pcba,tcperr_callback);
 	tcp_recv(pcba, recv_callback);  // all the action is now in callback
 
