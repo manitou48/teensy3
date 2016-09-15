@@ -35,7 +35,7 @@ void tcperr_callback(void * arg, err_t err)
 
 
 static	struct tcp_pcb * pcbl;   // listen pcb
-static struct tcp_pcb * pcba;   // accepted pcb
+static int sendqlth;
 
 
 // web page
@@ -48,6 +48,7 @@ void web_close(struct tcp_pcb * tpcb){
 	Serial.println("web close");
 	tcp_recv(tpcb,NULL);
 	tcp_err(tpcb,NULL);
+	tcp_sent(tpcb,NULL);
 	tcp_close(tpcb);
 }
 
@@ -58,16 +59,18 @@ void listen_err_callback(void * arg, err_t err)
 	*(int *)arg = err;
 }
 
+err_t sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
+	// invoked before last send, await ACKs from sent segments
 
+	if (tcp_sndbuf(tpcb) == sendqlth) web_close(tpcb);  // nothing q'd close
+	return 0;
+}
 
 void tcp_sendstr(struct tcp_pcb * tpcb, char *str) {
-	err_t err;
+	// we're not expecting write to fail for our small web reply < sendqlth
 
-	do {   
-		err=tcp_write(tpcb,str,strlen(str),TCP_WRITE_FLAG_COPY);
-		ether_poll();   // keep checkin while we send
-	} while( err < 0);   // -1 is ERR_MEM
-	tcp_output(tpcb);
+	tcp_write(tpcb,str,strlen(str),TCP_WRITE_FLAG_COPY);  // PUSH
+	tcp_output(tpcb);  // force ? necessary
 }
 
 err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t err)
@@ -100,10 +103,8 @@ err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t er
 	tcp_sendstr(tpcb,msg1);
 	tcp_sendstr(tpcb,msg2);
 	sprintf(str,"<hr>\n uptime %lu ms\n\n", millis());
+	tcp_sent(tpcb, sent_callback);   // wait for last then close
 	tcp_sendstr(tpcb,str);
-	// wait til send and close,  
-	ether_delay(1000);
-	web_close(tpcb);
 	return 0;
 }
 
@@ -114,10 +115,10 @@ err_t accept_callback(void * arg, struct tcp_pcb * newpcb, err_t err) {
 		return 1;
 	}
 	Serial.println("accepted");
+	sendqlth = tcp_sndbuf(newpcb);  
 	tcp_recv(newpcb, recv_callback);
 	tcp_err(newpcb, tcperr_callback);
-	tcp_accepted(pcbl);   // ref says the listen pcb
-	pcba = newpcb;    // let tcprx proceed
+//	tcp_accepted(pcbl);   // ref says the listen pcb
 	return 0;
 }
 
