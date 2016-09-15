@@ -1,5 +1,5 @@
 // K66 K64 lwip echo server
-//  problems with TCP connect hangs ?  if no tcp connects, udp server will run
+//  problems with TCP connect hangs ? bug in SYNACK_RECVD timeout ?
 // discussion on https://forum.pjrc.com/threads/34808-K66-Beta-Test?p=109161&viewfull=1#post109161
 
 #include "IPAddress.h"   // teensy
@@ -90,11 +90,18 @@ void udp_echosrv() {
     pcb = udp_new();
     udp_bind(pcb, IP_ADDR_ANY, 7);    // local port
     udp_recv(pcb,udp_callback,NULL);    // do once?
-    // fall into loop / ether_poll
+    // fall into loop  ether_poll
 }
 
 
 //   ----- TCP ------
+
+void echo_close(struct tcp_pcb * tpcb){
+    Serial.println("web close");
+	tcp_recv(tpcb,NULL);
+	tcp_err(tpcb,NULL);
+	tcp_close(tpcb);
+}
 
 void tcperr_callback(void * arg, err_t err)
 {
@@ -105,14 +112,27 @@ void tcperr_callback(void * arg, err_t err)
 
 
 static	struct tcp_pcb * pcbl;   // listen pcb
-static struct tcp_pcb * pcba;   // accepted pcb
-volatile bool tcprx_running=true;
 
 void listen_err_callback(void * arg, err_t err)
 {
 	// set with tcp_err()
 	Serial.print("TCP listen err "); Serial.println(err);
 	*(int *)arg = err;
+}
+
+err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t err)
+{
+	if (p == NULL) {
+		// other end closed
+		echo_close(tpcb);
+		return 0;
+	}
+	// echo it back,  not expecting our write to exceed sendqlth
+	tcp_write(tpcb,p->payload,p->tot_len,TCP_WRITE_FLAG_COPY);  // PUSH
+	tcp_output(tpcb);    // ?needed
+	tcp_recved(tpcb,p->tot_len);   // data processed
+	pbuf_free(p);
+	return 0;
 }
 
 err_t accept_callback(void * arg, struct tcp_pcb * newpcb, err_t err) {
@@ -122,35 +142,13 @@ err_t accept_callback(void * arg, struct tcp_pcb * newpcb, err_t err) {
 		return 1;
 	}
 	Serial.println("accepted");
-	tcp_accepted(pcbl);   // ref says the listen pcb
-	pcba = newpcb;    // let tcprx proceed
+	tcp_recv(newpcb, recv_callback);
+	tcp_err(newpcb, tcperr_callback);
+//	tcp_accepted(pcbl);   // ref says the listen pcb
 	return 0;
 }
 
-err_t recv_callback(void * arg, struct tcp_pcb * tpcb, struct pbuf * p, err_t err)
-{
-	static uint32_t t0=0, t,bytes=0;
 
-	if (p == NULL) {
-		// other end closed
-		t=t-t0;
-		Serial.println("remote closed");
-		Serial.print(bytes); Serial.println(" bytes");
-
-		tcp_close(tpcb);
-		tcprx_running=false;
-		return 0;
-	}
-	tcp_recved(tpcb,p->tot_len);   // data processed
-	bytes += p->tot_len;
-	do {   // echo it back
-		err=tcp_write(tpcb,p->payload,p->tot_len,TCP_WRITE_FLAG_COPY);
-		ether_poll();   // keep checkin while we send
-	} while( err < 0);   // -1 is ERR_MEM
-	tcp_output(tpcb);
-	pbuf_free(p);
-	return 0;
-}
 
 void tcp_echosrv() {
 	struct tcp_pcb * pcb;
@@ -159,24 +157,9 @@ void tcp_echosrv() {
 	tcp_bind(pcb,IP_ADDR_ANY, 7);  // server port
 	pcbl = tcp_listen(pcb);   // pcb deallocated
 	tcp_err(pcbl, listen_err_callback);
-  while(1) {
 	Serial.println("server listening on 7");
-	pcba = NULL;    // accept PCB
 	tcp_accept(pcbl, accept_callback);
 
-	while (pcba == NULL)  {
-		ether_poll();   // waiting connection
-    }
-	tcp_err(pcba,tcperr_callback);
-	tcp_recv(pcba, recv_callback);  // all the action is now in callback
-
-	while(tcprx_running){
-	 ether_poll();  // wait til close
-   }
-	tcprx_running=true;
-	}
-	Serial.println("fall through");
-	tcp_close(pcbl);
 	// fall through to main ether_poll loop ....
 }
 
