@@ -23,6 +23,7 @@ chiptemp.pde  read temperature from internal sensor on analog channel 38
 
 rtc.ino       RTC pps interrupt to measure crystal frequency
 rtc_alarm.ino demo sketch of RTC alarm
+RTCms.ino     get millisecond precision from the RTC
 
 wizfat.ino    hack to test SDfat SPI with W5200
 
