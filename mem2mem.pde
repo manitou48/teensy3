@@ -70,7 +70,21 @@ void memset32(void *dest, int val, unsigned int bytes)
         while (!(DMA_TCD1_CSR & DMA_TCD_CSR_DONE)) /* wait */ ;
 }
 
-
+void gpio2mem(void *dest, void * src, unsigned int bytes)
+{
+        DMA_TCD1_SADDR = src;
+        DMA_TCD1_SOFF = 0;
+        DMA_TCD1_ATTR = DMA_TCD_ATTR_SSIZE(2) | DMA_TCD_ATTR_DSIZE(2);
+        DMA_TCD1_NBYTES_MLNO = bytes;
+        DMA_TCD1_SLAST = 0;
+        DMA_TCD1_DADDR = dest;
+        DMA_TCD1_DOFF = 4;
+        DMA_TCD1_CITER_ELINKNO = 1;
+        DMA_TCD1_DLASTSGA = 0;
+        DMA_TCD1_BITER_ELINKNO = 1;
+        DMA_TCD1_CSR = DMA_TCD_CSR_START;
+        while (!(DMA_TCD1_CSR & DMA_TCD_CSR_DONE)) /* wait */ ;
+}
 
 void setup(){
 	Serial.begin(9600);
@@ -108,6 +122,10 @@ void loop(){
         memset32(dst,66,BYTES);
         t2 = micros() - t1;
 		prmbs("memset32",t2,BYTES);
+        t1=micros();
+        gpio2mem(dst,(void *)&GPIOA_PDIR,BYTES);
+        t2 = micros() - t1;
+   prmbs("gpio2mem",t2,BYTES);
         
         t1=micros();
         for(i=0;i<BYTES;i++) dst[i] = src[i];
