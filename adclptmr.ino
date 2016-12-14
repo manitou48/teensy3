@@ -88,6 +88,7 @@ void setup() {
 #else
   lptmr_init();
   PRREG(LPTMR0_CSR);
+  PRREG(LPTMR0_CMR);
   analogWriteFrequency(23,Fpwm);
   analogWrite(23, 128);
 #endif
