@@ -4,8 +4,8 @@
 // https://forum.pjrc.com/threads/40782-LPTMR-on-the-Teensy-3-1-3-2-3-5-3-6
 #define PRREG(x) Serial.print(#x" 0x"); Serial.println(x,HEX)
 
-#define Fpin13 24000
-#define Fpwm 48000
+#define Fadc 24000          // ADC sample rate
+#define Fpin13 48000        // freq on pin 13 
 
 volatile uint32_t ticks, aticks, adcval;
 
@@ -55,7 +55,7 @@ void lptmr_init() {
   SIM_SCGC5  |= SIM_SCGC5_LPTIMER;                                    // Enable Low Power Timer Access
   LPTMR0_CSR  = 0;                                                    // Disable
   LPTMR0_PSR  = LPTMR_PSR_PBYP;                                       // Bypass prescaler/filter
-  LPTMR0_CMR  = (Fpwm/Fpin13)-1;                              // counts til interrupt, rate = freq/(CMR+1)
+  LPTMR0_CMR  = (Fpin13/Fadc)-1;                              // counts til interrupt, rate = freq/(CMR+1)
   LPTMR0_CSR  = //LPTMR_CSR_TIE |                                       // Interrupt Enable
                 LPTMR_CSR_TPS(2) |                                    // Pin: 0=CMP0, 1=xtal, 2=pin13
            //     LPTMR_CSR_TFC |                                       // Free-Running Counter
@@ -70,7 +70,7 @@ void lptmr_init() {
 void pdb_init() {
     // Setup PDB for ADC0 at 24 kHz
   SIM_SCGC6  |= SIM_SCGC6_PDB;                                        // Enable PDB clock
-  PDB0_MOD    = (F_BUS / Fpin13) - 1;                                  // Timer period FIX
+  PDB0_MOD    = (F_BUS / Fadc) - 1;                                  // Timer period FIX
   PDB0_IDLY   = 0;                                                    // Interrupt delay
   PDB0_CH0C1  = PDB_CHnC1_TOS | PDB_CHnC1_EN;                         // Enable pre-trigger for ADC0
   PDB0_SC     = PDB_SC_TRGSEL(15) | PDB_SC_PDBEN |                    // SW trigger, enable interrupts, continuous mode
@@ -89,7 +89,7 @@ void setup() {
   lptmr_init();
   PRREG(LPTMR0_CSR);
   PRREG(LPTMR0_CMR);
-  analogWriteFrequency(23,Fpwm);
+  analogWriteFrequency(23,Fpin13);
   analogWrite(23, 128);
 #endif
 }
