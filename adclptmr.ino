@@ -94,12 +94,24 @@ void setup() {
 #endif
 }
 
-
+uint32_t us0,cnt0;
 
 void loop() {
   static uint32_t prev, aprev;
   Serial.print(adcval); Serial.print(" "); Serial.print(aticks-aprev); Serial.print(" ");
-  Serial.println(aticks);
+  Serial.print(aticks);
+  if (us0 ==0) {
+    us0=micros();
+    cnt0=aticks;
+  } else{
+    // ppm
+    uint32_t t=micros()-us0, cnt=aticks-cnt0;
+    float expected, ppm;
+    expected = t*1.e-6*Fadc;
+    ppm = 1.e6*(cnt-expected)/expected;
+    Serial.print("  ppm "); Serial.print(ppm,3);
+  }
+  Serial.println();
   prev = ticks;
   aprev = aticks;
   adcval=0;
