@@ -1,4 +1,4 @@
-// teensy adclptmr  use LPTMR0 counter (pin 13) to clock ADC
+// teensy adclptmr  use LPTMR0 counter (pin 13) to clock ADC A0
 // jumper PWM 23 to pin 13 for clock source
 //  or use PDB timer
 // https://forum.pjrc.com/threads/40782-LPTMR-on-the-Teensy-3-1-3-2-3-5-3-6
@@ -9,11 +9,10 @@
 
 volatile uint32_t ticks, aticks, adcval;
 
-void lptmr_isr(void)
+void lptmr_isr(void)      // not used
 {
   ticks++;
-  LPTMR0_CSR = 0b10000100;
-  LPTMR0_CSR = 0b01000101;
+  LPTMR0_CSR |=  LPTMR_CSR_TCF;    // clear
 }
 
 void adc0_isr() {
@@ -32,7 +31,7 @@ void adc_init() {
   ADC0_SC2   = ADC_SC2_REFSEL(1) | ADC_SC2_ADTRG;                     // Voltage ref internal, hardware trigger
   ADC0_SC3   = ADC_SC3_AVGE | ADC_SC3_AVGS(0);                        // Enable averaging, 4 samples
 
-  ADC0_SC3   = ADC_SC3_CAL;
+  ADC0_SC3   |= ADC_SC3_CAL;
   while (ADC0_SC3 & ADC_SC3_CAL)  ;                                      // Wait for calibration
 
   uint16_t sum0 = ADC0_CLPS + ADC0_CLP4 + ADC0_CLP3 +                 // Plus side gain
@@ -83,8 +82,13 @@ void setup() {
   while (!Serial);
   delay(2000);
   adc_init();
+  Serial.print("hz ");Serial.print(Fpin13); Serial.print(" "); Serial.println(Fadc);
+  PRREG(ADC0_CFG1);
+  PRREG(ADC0_CFG2);
+  PRREG(ADC0_SC3);
 #if 0                  // select timer
-  pdb_init();   
+  pdb_init(); 
+  PRREG(PDB0_MOD);  
 #else
   lptmr_init();
   PRREG(LPTMR0_CSR);
