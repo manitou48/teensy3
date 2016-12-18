@@ -11,8 +11,8 @@ volatile uint32_t ticks, aticks, adcval;
 
 void lptmr_isr(void)      // not used
 {
-  ticks++;
   LPTMR0_CSR |=  LPTMR_CSR_TCF;    // clear
+  ticks++;
 }
 
 void adc0_isr() {
