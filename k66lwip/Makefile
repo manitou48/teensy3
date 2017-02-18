@@ -3,7 +3,7 @@
 TARGET = $(notdir $(CURDIR))
 
 # The teensy version to use   K66 or K64
-TEENSY = K66
+TEENSY = K64
 
 # Set to 24000000, 48000000, or 96000000 to set CPU core speed
 TEENSY_CORE_SPEED = 120000000
@@ -120,6 +120,7 @@ CORE4FILES=$(LWIPDIR)/core/ipv4/icmp.c          \
     $(LWIPDIR)/core/ipv4/inet.c         \
     $(LWIPDIR)/core/ipv4/ip_addr.c          \
     $(LWIPDIR)/core/ipv4/ip_frag.c          \
+    $(LWIPDIR)/core/ipv4/igmp.c          \
     $(LWIPDIR)/core/ipv4/inet_chksum.c
 
 # NETIFFILES: Files implementing various generic network interface functions.'
