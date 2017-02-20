@@ -137,7 +137,7 @@ void mcast_init() {
 	ip = (uint8_t *) &mgroup.addr;
 	mac[0]=1;
 	mac[1]=0;
-	mac[2]= 0x53;
+	mac[2]= 0x5e;
 	mac[3] = ip[1] & 0x7f;
 	mac[4] = ip[2];
 	mac[5] = ip[3];
@@ -163,7 +163,8 @@ void mcast_init() {
 
 //	ENET_RCR |= ENET_RCR_PROM; // hack in promisuous
 //    ENET_GAUR = ENET_GALR = 0xffffffff;   // hack all hashes
-	ENET_GAUR = 0; ENET_GALR = 0x00000040;  // hack works
+	ENET_GAUR = 0; ENET_GALR = 0x00000040;  // hack works for 224.7.8.9
+//	ENET_GAUR = 0; ENET_GALR = 0x40000000;  // hack works for 224.7.7.7
 	// TODO need igmp join from lwIP, any setsockopt() ?
 }
 
