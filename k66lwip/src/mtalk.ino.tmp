@@ -73,37 +73,34 @@ void print_stats() {
 }
 
 
-void hexdump(uint8_t *p, int lth) {
-    char str[16];
-    int i,j,k,n;
+void dump(uint8_t * buff, int bytes) {
+  int i, cnt = 0, lines = (bytes + 15) / 16;
+  char str[64];
 
-    if (lth <= 0) return;
-    sprintf(str,"    "); Serial.print(str);
-    for (i=0;i<16;i++) {
-        sprintf(str," %02x",i);
-        Serial.print(str);
+  while (lines--) {
+    sprintf(str, "%04x  ", cnt);  Serial.print(str);
+    for (i = 0; i < 16; i++) {
+      if (i % 4 == 3) sprintf(str, "%02x ", buff[i]);
+      else sprintf(str, "%02x", buff[i]);
+      Serial.print(str);
     }
-    Serial.println("");
-    k=i=0;
-    do {
-        sprintf(str,"%04x",i); Serial.print(str);
-        i+=16;
-        if (lth > 16) n = 16;  else n = lth;
-        for (j=0;j<n;j++) {
-            sprintf(str," %02x",p[k++]);
-            Serial.print(str);
-        }
-        Serial.println("");
-        lth -= n;
-    } while (lth);
+    Serial.print("|");
+    for (i = 0; i < 16; i++) {
+      if (buff[i] < ' ' || buff[i]  > '\177') Serial.print("?");
+      else Serial.print((char)buff[i]);
+    }
+    Serial.print("|");
+    Serial.println();
+    buff += 16;
+    cnt += 16;
+  }
 }
 
 #define MGROUP "224.7.8.9"
 #define MPORT 7654
 
 // reverse of crc32 ethernet (04C11DB7)  0xEDB88320
-// used by k64 for multicast mac hash
-
+// used by k64 for multicast mac hash, could use hardware CRC
 
 uint32_t crc32(uint8_t *address, uint32_t bytes) {
     uint32_t crc = 0xFFFFFFFFU;
@@ -174,7 +171,7 @@ void udp_callback(void * arg, struct udp_pcb * upcb, struct pbuf * p, struct ip_
 	Serial.print(": ");
 	Serial.print(p->tot_len); Serial.println(" bytes");
 	Serial.println((char *)(p->payload)+52);
-    hexdump((uint8_t *)p->payload,64);
+    dump((uint8_t *)p->payload,64);
 	pbuf_free(p);
 }
 
