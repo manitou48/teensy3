@@ -6,6 +6,7 @@
 
 // api includes
 #include "lwip/udp.h"
+#include "lwip/igmp.h"
 #include "lwip/stats.h"
 
 #define swap2 __builtin_bswap16
@@ -58,6 +59,11 @@ void print_stats() {
 	sprintf(str,"ICMP in %d out %d",
 	 lwip_stats.icmp.recv,lwip_stats.icmp.xmit);
 	Serial.println(str);
+#if LWIP_IGMP
+	sprintf(str,"IGMP in %d out %d drops %d join %d",
+	 lwip_stats.igmp.recv,lwip_stats.igmp.xmit,lwip_stats.igmp.drop,lwip_stats.igmp.tx_join);
+	Serial.println(str);
+#endif
 #if MEM_STATS
 	sprintf(str,"HEAP avail %d used %d max %d err %d",
 	 lwip_stats.mem.avail,lwip_stats.mem.used,lwip_stats.mem.max,lwip_stats.mem.err);
@@ -143,29 +149,18 @@ void mcast_init() {
 	mac[5] = ip[3];
 	crc = crc32(mac,6);
 	// join group, set bit in 64-bit hash (2 regs)
+	igmp_joingroup(IP_ADDR_ANY,&mgroup);
 	// leave group need to clear bit
-#if 0
-    if (!((crc >> 0x1FU) & 1U))
-    {
-        ENET_GALR |= 1U << ((crc >> 0x1AU) & 0x1FU);
-    }
-    else
-    {
-        ENET_GAUR |= 1U << ((crc >> 0x1AU) & 0x1FU);
-    }
-#else
 	int hash = (crc >> 26) & 0x3f;   // 6 bit hash
 	Serial.print("crc ");Serial.print(crc,HEX); Serial.print(" hash ");
 	Serial.println(hash,HEX);
 	if (hash & 0x20) ENET_GAUR |= 1 << (hash & 0x1f);
 	 else ENET_GALR |= 1 << (hash & 0x1f);
-#endif
 
 //	ENET_RCR |= ENET_RCR_PROM; // hack in promisuous
 //    ENET_GAUR = ENET_GALR = 0xffffffff;   // hack all hashes
 	ENET_GAUR = 0; ENET_GALR = 0x00000040;  // hack works for 224.7.8.9
 //	ENET_GAUR = 0; ENET_GALR = 0x40000000;  // hack works for 224.7.7.7
-	// TODO need igmp join from lwIP, any setsockopt() ?
 }
 
 // UDP callbacks
@@ -177,9 +172,9 @@ void udp_callback(void * arg, struct udp_pcb * upcb, struct pbuf * p, struct ip_
 	Serial.print(">>>>from ");
     Serial.print(ipaddr_ntoa(addr));
 	Serial.print(": ");
-//	Serial.println(((char *)p->payload)[28]);
 	Serial.print(p->tot_len); Serial.println(" bytes");
- hexdump((uint8_t *)p->payload,48);
+	Serial.println((char *)(p->payload)+52);
+    hexdump((uint8_t *)p->payload,64);
 	pbuf_free(p);
 }
 

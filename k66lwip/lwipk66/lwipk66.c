@@ -174,7 +174,11 @@ err_t k66_enetif_init(struct netif *netif)
 	memcpy(netif->hwaddr,mac,6);
 	netif->hwaddr_len = ETHARP_HWADDR_LEN;
 	netif->mtu = 1500;
-	netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET |  NETIF_FLAG_LINK_UP | NETIF_FLAG_IGMP;
+	netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET |  NETIF_FLAG_LINK_UP;
+#if LWIP_IGMP
+	netif->flags |= NETIF_FLAG_IGMP;
+#endif /* LWIP_IGMP */
+
 	
 	etherk66_init();    
 
