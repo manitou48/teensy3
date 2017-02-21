@@ -156,8 +156,7 @@ void mcast_init() {
 
 //	ENET_RCR |= ENET_RCR_PROM; // hack in promisuous
 //    ENET_GAUR = ENET_GALR = 0xffffffff;   // hack all hashes
-	ENET_GAUR = 0; ENET_GALR = 0x00000040;  // hack works for 224.7.8.9
-//	ENET_GAUR = 0; ENET_GALR = 0x40000000;  // hack works for 224.7.7.7
+//	ENET_GAUR = 0; ENET_GALR = 0x00000040;  // hack works for 224.7.8.9
 }
 
 // UDP callbacks
