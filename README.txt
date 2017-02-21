@@ -41,6 +41,8 @@ cryptolib.ino  K66 CAU example
 
 mtalk.ino      multicast chat for wiznet
 
+crc.ino        CRC hardware test vs bit-bang
+
 --------
 Some performance comparisons at
 
