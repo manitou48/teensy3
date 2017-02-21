@@ -165,13 +165,12 @@ void mcast_init() {
 void udp_callback(void * arg, struct udp_pcb * upcb, struct pbuf * p, struct ip_addr * addr, u16_t port) 
 {
 	if (p == NULL) return;
-	udp_sendto(upcb,p,addr,port);
 	Serial.print(">>>>from ");
     Serial.print(ipaddr_ntoa(addr));
 	Serial.print(": ");
 	Serial.print(p->tot_len); Serial.println(" bytes");
-	Serial.println((char *)(p->payload)+52);
-    dump((uint8_t *)p->payload,64);
+	Serial.println((char *)(p->payload));
+    // dump((uint8_t *)p->payload,64);
 	pbuf_free(p);
 }
 
