@@ -43,6 +43,8 @@ mtalk.ino      multicast chat for wiznet
 
 crc.ino        CRC hardware test vs bit-bang
 
+wdogduff.ino   teensy 3* watchdog test
+
 --------
 Some performance comparisons at
 
