@@ -27,7 +27,9 @@ RTCms.ino     get millisecond precision from the RTC
 
 wizfat.ino    hack to test SDfat SPI with W5200
 
-wizpaul.ino    hack to test Paul;s SPIFIFO from Ethernet lib with W5200
+wizpaul.ino    hack to test Paul's SPIFIFO from Ethernet lib with W5200
+
+wizwww.ino     WebServer variation with forms, pin toggle
 
 LCperf.txt     beta test results of teensy LC
 
