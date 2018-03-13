@@ -47,6 +47,8 @@ crc.ino        CRC hardware test vs bit-bang
 
 wdogduff.ino   teensy 3* watchdog test
 
+dacpong.ino    DAC PDB ping-pong DMA buffers
+
 --------
 Some performance comparisons at
 
