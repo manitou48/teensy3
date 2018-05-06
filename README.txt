@@ -49,6 +49,8 @@ wdogduff.ino   teensy 3* watchdog test
 
 dacpong.ino    DAC PDB ping-pong DMA buffers
 
+isrperfpwm.ino ISR/attachInterrupt latency tester 
+
 --------
 Some performance comparisons at
 
