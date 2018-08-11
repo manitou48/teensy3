@@ -51,6 +51,8 @@ dacpong.ino    DAC PDB ping-pong DMA buffers
 
 isrperfpwm.ino ISR/attachInterrupt latency tester 
 
+uartdma        ping-pong DMA of UART receive
+
 --------
 Some performance comparisons at
 
