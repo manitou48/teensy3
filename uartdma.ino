@@ -67,7 +67,7 @@ void loop()
     // print or write to SD
     Serial.print(millis()); Serial.println(" ms");
     Serial.println((uint32_t)dest, HEX);
-    for (int i = 0; i < 512; i++)Serial.print((char)dest[i]);
+    for (int i = 0; i < SAMPLES/2; i++)Serial.print((char)dest[i]);
     Serial.println();
     ready = false;
   }
