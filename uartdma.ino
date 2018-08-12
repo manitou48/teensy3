@@ -51,7 +51,6 @@ void dmainit()
 
   Serial4.begin(4800);
   UART3_C5 =  UART_C5_RDMAS;  // ? enable DMA
-  UART3_C2 |= UART_C2_RIE;
 }
 
 void setup()
