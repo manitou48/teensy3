@@ -7,7 +7,6 @@ DMAMEM static uint8_t rx_buffer[SAMPLES];
 DMAChannel dma(false);
 
 volatile uint8_t *dest;
-volatile bool ready;
 
 void isr(void)
 {
@@ -25,7 +24,6 @@ void isr(void)
     // so we must print the first half
     dest = rx_buffer;
   }
-  ready = true;
 }
 
 void dmainit()
@@ -62,12 +60,16 @@ void setup()
 
 void loop()
 {
-  if (ready) {
+  static uint32_t prev = millis();
+  
+  if (dest) {
     // print or write to SD
-    Serial.print(millis()); Serial.println(" ms");
+    uint32_t t = millis();
+    Serial.print(t - prev); Serial.println(" ms");
     Serial.println((uint32_t)dest, HEX);
-    for (int i = 0; i < SAMPLES/2; i++)Serial.print((char)dest[i]);
+    for (int i = 0; i < SAMPLES / 2; i++)Serial.print((char)dest[i]);
     Serial.println();
-    ready = false;
+    prev = t;    // interrupt period
+    dest = 0;   // wait for next interrupt
   }
 }
