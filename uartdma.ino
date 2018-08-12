@@ -39,6 +39,7 @@ void dmainit()
   dma.TCD->SLAST = 0;
   dma.TCD->DADDR = rx_buffer;
   dma.TCD->DOFF = 1;
+  dma.TCD->NBYTES = 1;
   dma.TCD->CITER_ELINKNO = sizeof(rx_buffer) ;
   dma.TCD->DLASTSGA = -sizeof(rx_buffer);
   dma.TCD->BITER_ELINKNO = sizeof(rx_buffer) ;
@@ -61,7 +62,7 @@ void setup()
 void loop()
 {
   static uint32_t prev = millis();
-  
+
   if (dest) {
     // print or write to SD
     uint32_t t = millis();
