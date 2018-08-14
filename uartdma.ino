@@ -32,7 +32,7 @@ void dmainit()
   // Serial4  UART3
   dma.begin(true); // Allocate the DMA channel first
 
-  dma.source((volatile const signed char &) UART3_D);
+  dma.source((uint8_t &) UART3_D);
   dma.destinationBuffer(rx_buffer, sizeof(rx_buffer));
 
   dma.TCD->CSR = DMA_TCD_CSR_INTHALF | DMA_TCD_CSR_INTMAJOR;
