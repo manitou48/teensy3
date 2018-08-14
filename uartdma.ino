@@ -32,23 +32,13 @@ void dmainit()
   // Serial4  UART3
   dma.begin(true); // Allocate the DMA channel first
 
-  dma.TCD->SADDR = &UART3_D;
-  dma.TCD->SOFF = 0;
-  dma.TCD->ATTR = DMA_TCD_ATTR_SSIZE(0) | DMA_TCD_ATTR_DSIZE(0);
-  dma.TCD->NBYTES_MLNO = 1;
-  dma.TCD->SLAST = 0;
-  dma.TCD->DADDR = rx_buffer;
-  dma.TCD->DOFF = 1;
-  dma.TCD->CITER_ELINKNO = sizeof(rx_buffer) ;
-  dma.TCD->DLASTSGA = -sizeof(rx_buffer);
-  dma.TCD->BITER_ELINKNO = sizeof(rx_buffer) ;
+  dma.source((volatile const signed char &) UART3_D);
+  dma.destinationBuffer(rx_buffer, sizeof(rx_buffer));
+
   dma.TCD->CSR = DMA_TCD_CSR_INTHALF | DMA_TCD_CSR_INTMAJOR;
   dma.triggerAtHardwareEvent(DMAMUX_SOURCE_UART3_RX);
   dma.enable();
   dma.attachInterrupt(isr);
-
-  Serial4.begin(4800);
-  UART3_C5 =  UART_C5_RDMAS;  // ? enable DMA
 }
 
 void setup()
@@ -56,6 +46,8 @@ void setup()
   Serial.begin(9600);
   while (!Serial);
   dmainit();
+  Serial4.begin(4800);
+  UART3_C5 =  UART_C5_RDMAS;  // ? enable DMA
 }
 
 void loop()
