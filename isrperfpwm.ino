@@ -1,7 +1,7 @@
 // jumper 23 to 22  scope on 23 and 12, adjust PWM rate til 12 falls behind
-//  could optimize by direct ISR link
+// FASTISR  optimize by direct ISR link
 
-#define FASTISR
+//#define FASTISR
 
 // FASTRUN
 void pin_isr() {
@@ -16,7 +16,8 @@ void setup() {
 #ifdef FASTISR
   attachInterruptVector(IRQ_PORTC, pin_isr);
 #endif
-  analogWriteFrequency(23, 2500000);
+  //  NVIC_SET_PRIORITY(IRQ_PORTC, 0);   // pin 12 port C, reduce jitter?  nope
+  analogWriteFrequency(23, 1700000);
   analogWrite(23, 127);
 }
 
