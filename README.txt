@@ -53,6 +53,8 @@ isrperfpwm.ino ISR/attachInterrupt latency tester
 
 uartdma        ping-pong DMA of UART receive
 
+whetstone.ino  double and single whetstone benchmark
+
 --------
 Some performance comparisons at
 
