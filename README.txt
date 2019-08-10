@@ -55,6 +55,8 @@ uartdma        ping-pong DMA of UART receive
 
 whetstone.ino  double and single whetstone benchmark
 
+lptmrcnt.ino   like FreqCount but ISR for rollover
+
 --------
 Some performance comparisons at
 
