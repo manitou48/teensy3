@@ -58,6 +58,8 @@ whetstone.ino  double and single whetstone benchmark
 lptmrcnt.ino   like FreqCount but ISR for rollover
 
 rng.ino         T3.5/T3.6 TRNG random numbers
+
+ftmpcapture.ino T3.2 FTM0 timer capture period
 --------
 Some performance comparisons at
 
