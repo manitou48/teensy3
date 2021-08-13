@@ -60,6 +60,8 @@ lptmrcnt.ino   like FreqCount but ISR for rollover
 rng.ino         T3.5/T3.6 TRNG random numbers
 
 ftmpcapture.ino T3.2 FTM0 timer capture period
+
+gpsfreq.ino     GPS PPS capture FreqMeasure
 --------
 Some performance comparisons at
 
