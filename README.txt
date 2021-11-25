@@ -64,6 +64,8 @@ ftmpcapture.ino T3.2 FTM0 timer capture period
 gpsfreq.ino     GPS PPS capture FreqMeasure
 
 k66TPM.ino      T3.6 TPM timer tests
+
+dacPID.ino      T3.2 PID controller using DAC
 --------
 Some performance comparisons at
 
