@@ -59,7 +59,7 @@ int PID_Control() {
   error = setpoint - sensed_output;
   total_error += error; //accumalates the error - integral term
   if (total_error >= max_control) total_error = max_control;
-  else if (total_error <= min_control) total_error = min_control;
+  else if (total_error <= -max_control) total_error = -max_control;
 
   delta_error = error - last_error; //difference of error for derivative term
 
