@@ -1,5 +1,9 @@
 // teensy ftm capture   pin 20
 // http://shawnhymel.com/681/learning-the-teensy-lc-input-capture/
+#include "Adafruit_Si7021.h"
+
+Adafruit_Si7021 sensor = Adafruit_Si7021();
+
 volatile uint32_t count = 0;
 volatile uint32_t prev_val = 0;
 volatile uint32_t ovf_count = 0;
@@ -11,8 +15,8 @@ void setup() {
   // Set up our Serial port
   Serial.begin(9600);
   while (!Serial);
-
-  tone(2, 440, 0);   // test  jumper pin 2 to pin 20
+  sensor.begin();
+  //tone(2, 440, 0);   // test  jumper pin 2 to pin 20
 
   // The order of setting the TPMx_SC, TPMx_CNT, and TPMx_MOD
   // seems to matter. You must clear _SC, set _CNT to 0, set _MOD
@@ -83,6 +87,8 @@ void loop() {
 
     // Time between edges
     gap = count / (F_BUS / 1000000.);  // us
+    float ppm = (int)(count - F_BUS) / (F_BUS / 1000000.);
+    Serial.printf("%.3f ppm %.2f C ", ppm, sensor.readTemperature());
     Serial.print(count);
     Serial.print(" ticks   period: ");
     Serial.print(gap);
@@ -95,12 +101,13 @@ void loop() {
 
 // "ftm0_isr" is an interrupt vector defined for the Teensy
 void ftm0_isr(void) {
-
+  bool inc = false;
   uint32_t val;
   if ( FTM0_SC & (1 << 7) ) {
     // FTM0_SC |= (1 << 7);    // LC
     FTM0_SC &= ~(1 << 7);   // T3.2
     ovf_count++;
+    inc = true;
   }
 
   // If we got here from the input capture, we want to clear the
@@ -116,15 +123,13 @@ void ftm0_isr(void) {
       // Retrieve the counter value and compare it to the last one.
       // Take into account any overflows that have occured.
       val = FTM0_C5V;
-      if ( ovf_count == 0 ) {
-        count = val - prev_val;
-      } else {
-        count = (0x10000 - prev_val) + ((ovf_count - 1) << 16) + val;
-      }
+      if ( val <= 0xE000 || !inc) val |= ovf_count << 16;
+      else val |= (ovf_count - 1) << 16;
+      count = val - prev_val;
 
       // Save the counter value and reset the overflow counter
       prev_val = val;
-      ovf_count = 0;
+      //  ovf_count = 0;
 
       // Set a flag so that we can read the count in the main loop
       ic_flag = 1;
