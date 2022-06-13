@@ -66,6 +66,8 @@ gpsfreq.ino     GPS PPS capture FreqMeasure
 k66TPM.ino      T3.6 TPM timer tests
 
 dacPID.ino      T3.2 PID controller using DAC
+
+cmpperf.ino     T3.2 comparator example
 --------
 Some performance comparisons at
 
